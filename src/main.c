@@ -46,75 +46,42 @@ SOFTWARE.
 **
 **===========================================================================
 */
-
-uint16_t merajHodnotu()
+void inicializuj()
 {
-	uint16_t AD_value;
-	 GPIO_InitTypeDef GPIO_InitStructure;
-	 ADC_InitTypeDef ADC_InitStructure;
-	 // Enable GPIO clock *
-	 RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);//Opraviť a upraviť
-	 // Configure ADCx Channel 2 as analog input *
-	 GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1 ;
-	 GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;
-	 GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
-	 GPIO_Init(GPIOA, &GPIO_InitStructure);
+	GPIO_InitTypeDef GPIO_InitStructure;
+	ADC_InitTypeDef ADC_InitStructure;
+	// Enable GPIO clock *
+	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);//Opraviť a upraviť
+	// Configure ADCx Channel 2 as analog input *
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1 ;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
 	// Enable the HSI oscillator *
-	 RCC_HSICmd(ENABLE);
+	RCC_HSICmd(ENABLE);
 	// Check that HSI oscillator is ready *
-	 while(RCC_GetFlagStatus(RCC_FLAG_HSIRDY) == RESET);
-	 // Enable ADC clock *
-	 RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
-	 // Initialize ADC structure *
-	 ADC_StructInit(&ADC_InitStructure);
-	 // ADC1 configuration *
-	 ADC_InitStructure.ADC_Resolution = ADC_Resolution_12b;
-	 ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;
-	 ADC_InitStructure.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_None;
-	 ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
-	 ADC_InitStructure.ADC_NbrOfConversion = 1;
-	 ADC_Init(ADC1, &ADC_InitStructure);
+	while(RCC_GetFlagStatus(RCC_FLAG_HSIRDY) == RESET);
+	// Enable ADC clock *
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
+	// Initialize ADC structure *
+	ADC_StructInit(&ADC_InitStructure);
+	// ADC1 configuration *
+	ADC_InitStructure.ADC_Resolution = ADC_Resolution_12b;
+	ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;
+	ADC_InitStructure.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_None;
+	ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
+	ADC_InitStructure.ADC_NbrOfConversion = 1;
+	ADC_Init(ADC1, &ADC_InitStructure);
 	// ADCx regular channel8 configuration *
-	 ADC_RegularChannelConfig(ADC1, ADC_Channel_1, 1, ADC_SampleTime_16Cycles);
-	 // Enable the ADC *
-	 ADC_Cmd(ADC1, ENABLE);
-	 // Wait until the ADC1 is ready *
-	 while(ADC_GetFlagStatus(ADC1, ADC_FLAG_ADONS) == RESET)
-	 {
-	 }
-	 // Start ADC Software Conversion *
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_1, 1, ADC_SampleTime_16Cycles);
+	// Enable the ADC *
+	ADC_Cmd(ADC1, ENABLE);
+	// Wait until the ADC1 is ready *
+	while(ADC_GetFlagStatus(ADC1, ADC_FLAG_ADONS) == RESET)
+	{
+	}
 
-	 ADC_SoftwareStartConv(ADC1);
-	 while(!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC)){}
-	 AD_value = ADC_GetConversionValue(ADC1);
-	 return ADC_GetConversionValue(ADC1);
-}
-
-
-int main(void)
-{
-	int i = 0;
-	uint16_t AD_value;
-  /**
-  *  IMPORTANT NOTE!
-  *  See the <system_*.c> file and how/if the SystemInit() function updates 
-  *  SCB->VTOR register. Sometimes the symbol VECT_TAB_SRAM needs to be defined 
-  *  when building the project if code has been located to RAM and interrupts 
-  *  are used. Otherwise the interrupt table located in flash will be used.
-  *  E.g.  SCB->VTOR = 0x20000000;  
-  */
-
-  /**
-  *  At this stage the microcontroller clock setting is already configured,
-  *  this is done through SystemInit() function which is called from startup
-  *  file (startup_stm32l1xx_hd.s) before to branch to application main.
-  *  To reconfigure the default setting of SystemInit() function, refer to
-  *  system_stm32l1xx.c file
-  */
-
-  /* TODO - Add your application code here */
-  /* Start ADC Software Conversion */
-  //GPIOA
+	//GPIOA
 	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);
 	GPIO_InitTypeDef gpioIntPreA;
 	gpioIntPreA.GPIO_Mode = GPIO_Mode_OUT;
@@ -124,19 +91,34 @@ int main(void)
 	gpioIntPreA.GPIO_Speed = GPIO_Speed_40MHz;
 
 	GPIO_Init(GPIOA, &gpioIntPreA);
-	GPIO_ToggleBits(GPIOA,GPIO_Pin_5);
-  /* Infinite loop */
-  while (1)
-  {
-	i++;
-	int mer = merajHodnotu();
-	if ((i % (mer*1)) == 0)
+}
+
+uint16_t merajHodnotu()
+{
+	ADC_SoftwareStartConv(ADC1);
+	while(!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC)){}
+
+	return ADC_GetConversionValue(ADC1);
+}
+
+
+int main(void)
+{
+	int i = 0, mer;
+	inicializuj();
+	/* Infinite loop */
+	while (1)
 	{
-		GPIO_ToggleBits(GPIOA,GPIO_Pin_5);
-		i = 0;
+		i++;
+		mer = merajHodnotu();
+		if ((i % (mer*10)) == 0)
+		{
+			GPIO_ToggleBits(GPIOA,GPIO_Pin_5);
+			i = 0;
+		}
 	}
-  }
-  return 0;
+
+	return 0;
 }
 
 
