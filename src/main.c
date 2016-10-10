@@ -46,10 +46,55 @@ SOFTWARE.
 **
 **===========================================================================
 */
+
+uint16_t merajHodnotu()
+{
+	uint16_t AD_value;
+	 GPIO_InitTypeDef GPIO_InitStructure;
+	 ADC_InitTypeDef ADC_InitStructure;
+	 // Enable GPIO clock *
+	 RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);//Opraviť a upraviť
+	 // Configure ADCx Channel 2 as analog input *
+	 GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1 ;
+	 GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;
+	 GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
+	 GPIO_Init(GPIOA, &GPIO_InitStructure);
+	// Enable the HSI oscillator *
+	 RCC_HSICmd(ENABLE);
+	// Check that HSI oscillator is ready *
+	 while(RCC_GetFlagStatus(RCC_FLAG_HSIRDY) == RESET);
+	 // Enable ADC clock *
+	 RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
+	 // Initialize ADC structure *
+	 ADC_StructInit(&ADC_InitStructure);
+	 // ADC1 configuration *
+	 ADC_InitStructure.ADC_Resolution = ADC_Resolution_12b;
+	 ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;
+	 ADC_InitStructure.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_None;
+	 ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
+	 ADC_InitStructure.ADC_NbrOfConversion = 1;
+	 ADC_Init(ADC1, &ADC_InitStructure);
+	// ADCx regular channel8 configuration *
+	 ADC_RegularChannelConfig(ADC1, ADC_Channel_1, 1, ADC_SampleTime_16Cycles);
+	 // Enable the ADC *
+	 ADC_Cmd(ADC1, ENABLE);
+	 // Wait until the ADC1 is ready *
+	 while(ADC_GetFlagStatus(ADC1, ADC_FLAG_ADONS) == RESET)
+	 {
+	 }
+	 // Start ADC Software Conversion *
+
+	 ADC_SoftwareStartConv(ADC1);
+	 while(!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC)){}
+	 AD_value = ADC_GetConversionValue(ADC1);
+	 return ADC_GetConversionValue(ADC1);
+}
+
+
 int main(void)
 {
-  int i = 0;
-
+	int i = 0;
+	uint16_t AD_value;
   /**
   *  IMPORTANT NOTE!
   *  See the <system_*.c> file and how/if the SystemInit() function updates 
@@ -68,15 +113,74 @@ int main(void)
   */
 
   /* TODO - Add your application code here */
+  /* Start ADC Software Conversion */
+  //GPIOA
+	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);
+	GPIO_InitTypeDef gpioIntPreA;
+	gpioIntPreA.GPIO_Mode = GPIO_Mode_OUT;
+	gpioIntPreA.GPIO_OType = GPIO_OType_PP;
+	gpioIntPreA.GPIO_PuPd = GPIO_PuPd_UP  ;
+	gpioIntPreA.GPIO_Pin = GPIO_Pin_5;
+	gpioIntPreA.GPIO_Speed = GPIO_Speed_40MHz;
 
-
+	GPIO_Init(GPIOA, &gpioIntPreA);
+	GPIO_ToggleBits(GPIOA,GPIO_Pin_5);
   /* Infinite loop */
   while (1)
   {
 	i++;
+	int mer = merajHodnotu();
+	if ((i % (mer*1)) == 0)
+	{
+		GPIO_ToggleBits(GPIOA,GPIO_Pin_5);
+		i = 0;
+	}
   }
   return 0;
 }
+
+
+/*void adc_init(uint16_t &AD_value)
+{
+	 GPIO_InitTypeDef GPIO_InitStructure;
+	 ADC_InitTypeDef ADC_InitStructure;
+	 /* Enable GPIO clock *
+	 RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);//Opraviť a upraviť
+	 /* Configure ADCx Channel 2 as analog input *
+	 GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1 ;
+	 GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AN;
+	 GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL ;
+	 GPIO_Init(GPIOA, &GPIO_InitStructure);
+	/* Enable the HSI oscillator *
+	 RCC_HSICmd(ENABLE);
+	/* Check that HSI oscillator is ready *
+	 while(RCC_GetFlagStatus(RCC_FLAG_HSIRDY) == RESET);
+	 /* Enable ADC clock *
+	 RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
+	 /* Initialize ADC structure *
+	 ADC_StructInit(&ADC_InitStructure);
+	 /* ADC1 configuration *
+	 ADC_InitStructure.ADC_Resolution = ADC_Resolution_12b;
+	 ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;
+	 ADC_InitStructure.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_None;
+	 ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
+	 ADC_InitStructure.ADC_NbrOfConversion = 1;
+	 ADC_Init(ADC1, &ADC_InitStructure);
+	/* ADCx regular channel8 configuration *
+	 ADC_RegularChannelConfig(ADC1, ADC_Channel_1, 1, ADC_SampleTime_16Cycles);
+	 /* Enable the ADC *
+	 ADC_Cmd(ADC1, ENABLE);
+	 /* Wait until the ADC1 is ready *
+	 while(ADC_GetFlagStatus(ADC1, ADC_FLAG_ADONS) == RESET)
+	 {
+	 }
+	 /* Start ADC Software Conversion *
+
+	 ADC_SoftwareStartConv(ADC1);
+	 while(!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC)){}
+	 AD_value = ADC_GetConversionValue(ADC1);
+}*/
+
 
 #ifdef  USE_FULL_ASSERT
 
